@@ -55,4 +55,11 @@ namespace EShopApi.Models
         public string Product_Image { get; set; }
     }
 
+    public class UserDto
+    {
+        public string User_ID { get; set; }
+        public string User_Name { get; set; }
+        public string User_Email { get; set; }
+    }
+
 }

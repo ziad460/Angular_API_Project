@@ -11,6 +11,12 @@ namespace EShopApi.Models
     {
         public ApplicationDbContext():base("connection")
         { }
+
+        public static ApplicationDbContext Create()
+        {
+            return new ApplicationDbContext();
+        }
+
         public DbSet<Category> Categories { get; set; }
         public DbSet<CategoryType> categoryTypes { get; set; }
         public DbSet<Order> Orders { get; set; }

@@ -1,23 +1,29 @@
 ﻿using EShopApi.Models;
+using Microsoft.AspNet.Identity;
+using Microsoft.AspNet.Identity.EntityFramework;
 using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Web.Http;
+using System.Web.Http.Cors;
 
 namespace EShopApi.Controllers
 {
+    
     public class CartController : ApiController
     {
         ApplicationDbContext context = new ApplicationDbContext();
-        
+
+        [Route("GetUser")]
+        public IHttpActionResult GetUser()
+        {
+            return Ok(User.Identity.Name);
+        }
+
+        [Route("api/cart/products")]
         public IHttpActionResult GetProductsInCart()
         {
-            //if (User.Identity.IsAuthenticated == false)
-            //{
-            //    return StatusCode(HttpStatusCode.Forbidden);
-            //}
             List<UserProducts> products = context.UserProducts.Where(model => model.Customer.UserName == User.Identity.Name).ToList();
             List<CartDto> CartProducts = new List<CartDto>();
             foreach (var item in products)
@@ -35,21 +41,24 @@ namespace EShopApi.Controllers
             return Ok(CartProducts);
         }
 
+        [HttpPost]
+        [Route("api/addcart/{product_id}")]
         public IHttpActionResult PostAddToCart(int product_id)
         {
-            if (User.Identity.IsAuthenticated == false)
-            {
-                return StatusCode(HttpStatusCode.Forbidden);
-            }
             try
             {
-                var user = context.Users.FirstOrDefault(model => model.UserName == User.Identity.Name);
+                UserStore<ApplicationUser> userStore = new UserStore<ApplicationUser>();
+                UserManager<ApplicationUser> manager = new UserManager<ApplicationUser>(userStore);
+
+                var user = manager.FindByEmail(User.Identity.Name);
                 var product = context.Products.FirstOrDefault(model => model.Product_ID == product_id);
+
                 UserProducts userProducts = new UserProducts
                 {
                     Customer_ID = user.Id,
                     Product_ID = product.Product_ID,
                 };
+
                 context.UserProducts.Add(userProducts);
                 context.SaveChanges();
                 return Created(Url.Link("DefaultApi", null), userProducts);
