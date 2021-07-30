@@ -62,4 +62,33 @@ namespace EShopApi.Models
         public string User_Email { get; set; }
     }
 
+    public class UserProductsDto
+    {
+        public int Product_ID { get; set; }
+        public string Customer_ID { get; set; }
+    }
+
+    public class OrderDetailsDto
+    {
+        public int OrderDetails_ID { get; set; }
+        public int Order_ID { get; set; }
+        public int Product_ID { get; set; }
+        public decimal Total_price { get; set; }
+    }
+
+    public class ShippingDto
+    {
+        public int Shipping_ID { get; set; }
+        public string Shipping_Email { get; set; }
+        public string Shipping_FName { get; set; }
+        public string Shipping_LName { get; set; }
+        public string Address1 { get; set; }
+        public string Address2 { get; set; }
+        public int? Postal_Code { get; set; }
+        public Cities City { get; set; }
+        public long Phone1 { get; set; }
+        public long? Phone2 { get; set; }
+        public string Notes { get; set; }
+    }
+
 }

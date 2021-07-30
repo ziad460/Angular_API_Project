@@ -10,16 +10,10 @@ using System.Web.Http.Cors;
 
 namespace EShopApi.Controllers
 {
-    
+    [Authorize]
     public class CartController : ApiController
     {
         ApplicationDbContext context = new ApplicationDbContext();
-
-        [Route("GetUser")]
-        public IHttpActionResult GetUser()
-        {
-            return Ok(User.Identity.Name);
-        }
 
         [Route("api/cart/products")]
         public IHttpActionResult GetProductsInCart()
@@ -47,10 +41,7 @@ namespace EShopApi.Controllers
         {
             try
             {
-                UserStore<ApplicationUser> userStore = new UserStore<ApplicationUser>();
-                UserManager<ApplicationUser> manager = new UserManager<ApplicationUser>(userStore);
-
-                var user = manager.FindByEmail(User.Identity.Name);
+                var user = context.Users.FirstOrDefault(model => model.Email == User.Identity.Name);
                 var product = context.Products.FirstOrDefault(model => model.Product_ID == product_id);
 
                 UserProducts userProducts = new UserProducts
@@ -61,7 +52,21 @@ namespace EShopApi.Controllers
 
                 context.UserProducts.Add(userProducts);
                 context.SaveChanges();
-                return Created(Url.Link("DefaultApi", null), userProducts);
+                List<UserProducts> products = context.UserProducts.Where(model => model.Customer.UserName == User.Identity.Name).ToList();
+                List<CartDto> CartProducts = new List<CartDto>();
+                foreach (var item in products)
+                {
+                    CartProducts.Add(new CartDto
+                    {
+                        Product_ID = item.Product_ID,
+                        Product_Image = item.Product.Product_Image,
+                        Product_Name = item.Product.Product_Name,
+                        Product_Price = item.Product.Product_Price,
+                        Product_Quantity = item.Product_Quantity,
+                        Cart_ID = item.UserProducts_ID
+                    });
+                };
+                return Ok(CartProducts);
             }
             catch (Exception ex)
             {
@@ -70,6 +75,7 @@ namespace EShopApi.Controllers
         }
 
         [Route("api/Cart/{id}/{quantity}")]
+        [HttpPut]
         public IHttpActionResult SetQuantity(int id, int quantity)
         {
             if (quantity <= 0)
@@ -79,16 +85,51 @@ namespace EShopApi.Controllers
             UserProducts userproduct = context.UserProducts.FirstOrDefault(model => model.UserProducts_ID == id);
             userproduct.Product_Quantity = quantity;
             context.SaveChanges();
-            CartDto cart = new CartDto()
+            List<UserProducts> products = context.UserProducts.Where(model => model.Customer.UserName == User.Identity.Name).ToList();
+            List<CartDto> CartProducts = new List<CartDto>();
+            foreach (var item in products)
             {
-                Cart_ID = userproduct.UserProducts_ID,
-                Product_Quantity = userproduct.Product_Quantity,
-                Product_ID = userproduct.Product_ID,
-                Product_Image = userproduct.Product.Product_Image,
-                Product_Name = userproduct.Product.Product_Name,
-                Product_Price = userproduct.Product.Product_Price,
+                CartProducts.Add(new CartDto
+                {
+                    Product_ID = item.Product_ID,
+                    Product_Image = item.Product.Product_Image,
+                    Product_Name = item.Product.Product_Name,
+                    Product_Price = item.Product.Product_Price,
+                    Product_Quantity = item.Product_Quantity,
+                    Cart_ID = item.UserProducts_ID
+                });
             };
-            return Ok(cart);
+            return Ok(CartProducts);
+        }
+        [HttpDelete]
+        [Route("api/delete/{cart_id}")]
+        public IHttpActionResult DeleteFromCart(int cart_id)
+        {
+            try
+            {
+                var userProduct = context.UserProducts.FirstOrDefault(model => model.UserProducts_ID == cart_id);
+                context.UserProducts.Remove(userProduct);
+                context.SaveChanges();
+                List<UserProducts> products = context.UserProducts.Where(model => model.Customer.UserName == User.Identity.Name).ToList();
+                List<CartDto> CartProducts = new List<CartDto>();
+                foreach (var item in products)
+                {
+                    CartProducts.Add(new CartDto
+                    {
+                        Product_ID = item.Product_ID,
+                        Product_Image = item.Product.Product_Image,
+                        Product_Name = item.Product.Product_Name,
+                        Product_Price = item.Product.Product_Price,
+                        Product_Quantity = item.Product_Quantity,
+                        Cart_ID = item.UserProducts_ID
+                    });
+                };
+                return Ok(CartProducts);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
     }
 }
